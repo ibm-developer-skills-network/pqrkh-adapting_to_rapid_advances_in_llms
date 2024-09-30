@@ -1,0 +1,42 @@
+<!-- public/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Language Learner</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Language Learner</h1>
+
+    <div class="section">
+      <h2>Choose Language and Topic</h2>
+      <input type="text" id="language" placeholder="Enter Language (e.g., Spanish)" />
+      <input type="text" id="topic" placeholder="Enter Topic (e.g., Greetings)" />
+      <button id="startLesson">Start Lesson</button>
+    </div>
+
+    <div class="section" id="lessonSection" style="display: none;">
+      <h2>Lesson</h2>
+      <p id="lessonContent"></p>
+      <button id="startExercise">Start Exercise</button>
+    </div>
+
+    <div class="section" id="exerciseSection" style="display: none;">
+      <h2>Exercise</h2>
+      <p id="exerciseContent"></p>
+      <textarea id="userAnswer" placeholder="Type your answer here..."></textarea>
+      <button id="submitAnswer">Submit Answer</button>
+    </div>
+
+    <div class="section" id="feedbackSection" style="display: none;">
+      <h2>Feedback</h2>
+      <p id="feedbackContent"></p>
+      <button id="restart">Restart</button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
