@@ -1,4 +1,3 @@
-// public/app.js
 document.addEventListener('DOMContentLoaded', () => {
   const languageInput = document.getElementById('language');
   const answerInput = document.getElementById('answer');
@@ -14,7 +13,6 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // Clear previous response
     responseDiv.innerHTML = 'Processing your answer...';
 
     try {
@@ -32,11 +30,9 @@ document.addEventListener('DOMContentLoaded', () => {
           <p><strong>Feedback:</strong> ${data.feedback}</p>
         `;
       } else if (data.errors) {
-        // Display validation errors
         const errorMessages = data.errors.map(err => err.msg).join('<br>');
         responseDiv.innerHTML = `<p style="color: red;"><strong>Error:</strong><br>${errorMessages}</p>`;
       } else if (data.error) {
-        // Display server-side errors
         responseDiv.innerHTML = `<p style="color: red;"><strong>Error:</strong> ${data.error}</p>`;
       } else {
         responseDiv.innerHTML = '<p style="color: red;">An unknown error occurred.</p>';

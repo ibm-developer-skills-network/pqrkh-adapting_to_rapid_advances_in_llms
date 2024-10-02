@@ -123,9 +123,8 @@ function extractContent(response: AIMessageChunk | string): string {
     if (typeof response.content === "string") {
       return response.content.trim();
     } else if (Array.isArray(response.content)) {
-      // Concatenate all 'content' fields from the array
       const contents = response.content
-        .filter(isMessageContentText) // Only keep text chunks
+        .filter(isMessageContentText) 
         .map(chunk => chunk.text)
         .join(" ")
         .trim();
@@ -148,13 +147,10 @@ export async function gradeAnswer(answer: string): Promise<GradingResponse> {
     // Invoke the LLM with the formatted messages
     const response = await llmComplex.invoke(formattedPrompt);
 
-    // Extract content using helper function
     const gradingContent = extractContent(response);
 
-    // Debugging: Log the raw response
     console.log("Grading content received:", gradingContent);
 
-    // Parse the JSON response
     const grading: GradingResponse = JSON.parse(gradingContent);
 
     return grading;
@@ -187,10 +183,8 @@ export async function generateFeedback(grading: GradingResponse): Promise<string
     // Invoke the LLM with the formatted messages
     const feedbackResponse = await llmSimple.invoke(formattedPrompt);
 
-    // Extract content using helper function
     const feedbackContent = extractContent(feedbackResponse);
 
-    // Debugging: Log the raw response
     console.log("Analysis content received:", feedbackContent);
 
     return feedbackContent;
@@ -212,16 +206,13 @@ export async function generateFeedback(grading: GradingResponse): Promise<string
  */
 export async function moderateFeedback(feedback: string): Promise<boolean> {
   try {
-    // Format the prompt with the feedback
     const formattedPrompt = await guardrailsPrompt.format({ feedback });
 
-    // Invoke the WatsonxAI model with the formatted messages
     const analysis = await llmGuardrails.invoke(formattedPrompt);
 
     // Extract content using helper function
     const analysisContent = extractContent(analysis);
 
-    // Debugging: Log the raw response
     console.log("Analysis content received:", analysisContent);
 
     // Determine if content is clean based on analysis
