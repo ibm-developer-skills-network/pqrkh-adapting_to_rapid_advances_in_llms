@@ -1,121 +1,239 @@
-// llm.ts
-import { OpenAI } from '@langchain/openai';
-import { PromptTemplate } from '@langchain/core/prompts';
-import dotenv from 'dotenv';
+import { ChatOpenAI } from "@langchain/openai";
+import type { AIMessageChunk, MessageContentComplex, MessageContentText } from "@langchain/core/messages";
+// import { WatsonxAI } from "@langchain/community/llms/watsonx_ai";
+import { ChatPromptTemplate } from "@langchain/core/prompts"; 
+import dotenv from "dotenv";
 
 dotenv.config();
 
-/**
- * Initialize the OpenAI LLM using LangChain
- */
-const llm = new OpenAI({
-  openAIApiKey: process.env.OPENAI_API_KEY,
+
+// LLM 1 - Complex: Grades the answer and returns JSON
+const llmComplex = new ChatOpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
   temperature: 0.7,
-  modelName: 'gpt-4o-mini',
+  model: "gpt-4o-mini", 
 });
+
+// LLM 2 - Simple: Formulates feedback based on grading JSON
+const llmSimple = new ChatOpenAI({
+  apiKey: process.env.OPENAI_API_KEY, 
+  temperature: 0.5,
+  model: "gpt-4o-mini", 
+});
+
+// Optional LLM 3 - Guardrails: Content moderation
+const llmGuardrails = new ChatOpenAI({
+  apiKey: process.env.OPENAI_API_KEY, 
+  temperature: 0.3,
+  model: "gpt-4o-mini", 
+});
+
+// Llama model with IBM WatsonX
+// const llmWatsonx = new WatsonxAI({
+//   modelId: "meta-llama/llama-2-70b-chat",
+//   modelParameters: {
+//     max_new_tokens: 100,
+//     min_new_tokens: 0,
+//     stop_sequences: [],
+//     repetition_penalty: 1,
+//   },
+// });
+
+
+// Prompt for LLM 1 - Grading
+const gradingPrompt = ChatPromptTemplate.fromMessages([
+    ["system", "You are an experienced language tutor." ],
+    [
+      "user",`Grade the following answer on a scale of 1 to 10.
+        Provide the grade as an integer under the key "mark" and list the mistakes under the key "mistakes".
+
+        Answer:
+        "{answer}"
+
+        Response format (JSON):
+        {{
+          "mark": integer,
+          "mistakes": ["mistake1", "mistake2", ...]
+            }}`,
+    ],
+
+]);
+
+// Prompt for LLM 2 - Feedback
+const feedbackPrompt = ChatPromptTemplate.fromMessages([
+
+    ["system","You are a friendly language tutor." ],
+    ["user",`
+Based on the following grading, provide constructive feedback to the student.
+
+Grading:
+{{
+  "mark": {mark},
+  "mistakes": {mistakes}
+    }}
+
+Feedback:
+      `,
+    ],
+]);
+
+// Optional Prompt for LLM 3 - Guardrails
+const guardrailsPrompt = ChatPromptTemplate.fromMessages([
+  ["system", "You are a content moderator." ],
+  ["user",`
+Analyze the following feedback for any inappropriate or offensive content. Respond with "Clean" if the content is appropriate or "Flagged" if it contains disallowed content.
+
+Feedback:
+"{feedback}"
+
+Analysis:
+      `,
+],
+]);
 
 /**
- * Define Prompt Templates
- * It's efficient to define them once instead of inside each function.
+ * Type Definitions
  */
-const lessonPrompt = new PromptTemplate({
-  template: `You are a friendly language tutor teaching {language}. Provide a brief lesson on "{topic}". Make it engaging and easy to understand.`,
-  inputVariables: ['language', 'topic'],
-});
-
-const exercisePrompt = new PromptTemplate({
-  template: `You are a language tutor for {language}. Create a simple exercise to practice "{topic}". Provide clear instructions and examples.`,
-  inputVariables: ['language', 'topic'],
-});
-
-const feedbackPrompt = new PromptTemplate({
-  template: `You are a language tutor for {language}. Provide constructive feedback on the following answer:\n\n"{userAnswer}"\n\nInclude corrections and suggestions for improvement.`,
-  inputVariables: ['language', 'userAnswer'],
-});
-
-/**
- * Generates a lesson on a given topic for the specified language.
- * @param language - The language to learn.
- * @param topic - The topic of the lesson.
- * @returns The generated lesson text.
- */
-export async function generateLesson(language: string, topic: string): Promise<string> {
-  try {
-    // Await the formatted prompt
-    const formattedPrompt = await lessonPrompt.format({ language, topic });
-
-    // Call the LLM with the formatted prompt
-    const lesson = await llm.call(formattedPrompt);
-
-    return lesson.trim() || 'No lesson available.';
-  } catch (error) {
-    if (isError(error)) {
-      console.error('Error in generateLesson:', error.message);
-      throw new Error(`Failed to generate lesson: ${error.message}`);
-    } else {
-      console.error('Unknown error in generateLesson:', error);
-      throw new Error('Failed to generate lesson due to an unknown error.');
-    }
-  }
+interface GradingResponse {
+  mark: number;
+  mistakes: string[];
 }
 
 /**
- * Creates an exercise based on the lesson topic for the specified language.
- * @param language - The language to learn.
- * @param topic - The topic of the exercise.
- * @returns The generated exercise text.
- */
-export async function generateExercise(language: string, topic: string): Promise<string> {
-  try {
-    // Await the formatted prompt
-    const formattedPrompt = await exercisePrompt.format({ language, topic });
-
-    // Call the LLM with the formatted prompt
-    const exercise = await llm.call(formattedPrompt);
-
-    return exercise.trim() || 'No exercise available.';
-  } catch (error) {
-    if (isError(error)) {
-      console.error('Error in generateExercise:', error.message);
-      throw new Error(`Failed to generate exercise: ${error.message}`);
-    } else {
-      console.error('Unknown error in generateExercise:', error);
-      throw new Error('Failed to generate exercise due to an unknown error.');
-    }
-  }
-}
-
-/**
- * Provides feedback on the user's answer to an exercise.
- * @param language - The language being learned.
- * @param userAnswer - The user's answer to the exercise.
- * @returns The feedback text.
- */
-export async function provideFeedback(language: string, userAnswer: string): Promise<string> {
-  try {
-    // Await the formatted prompt
-    const formattedPrompt = await feedbackPrompt.format({ language, userAnswer });
-
-    // Call the LLM with the formatted prompt
-    const feedback = await llm.call(formattedPrompt);
-
-    return feedback.trim() || 'No feedback available.';
-  } catch (error) {
-    if (isError(error)) {
-      console.error('Error in provideFeedback:', error.message);
-      throw new Error(`Failed to provide feedback: ${error.message}`);
-    } else {
-      console.error('Unknown error in provideFeedback:', error);
-      throw new Error('Failed to provide feedback due to an unknown error.');
-    }
-  }
-}
-
-/**
- * Type guard to check if an error is an instance of Error.
- * @param error - The error object to check.
- * @returns True if error is an instance of Error, otherwise false.
+ * Type Guard to Check if an Error is an Instance of Error
  */
 function isError(error: unknown): error is Error {
-  return typeof error === 'object' && error !== null && 'message' in error;
+  return typeof error === "object" && error !== null && "message" in error;
+}
+
+function isMessageContentText(chunk: MessageContentComplex): chunk is MessageContentText {
+  return (chunk as MessageContentText).type === "text" && typeof (chunk as MessageContentText).text === "string";
+}
+
+/**
+ * Helper Function to Extract Content from AIMessageChunk or String
+ * @param response - The response from the LLM invocation
+ * @returns The extracted content as a string
+ * @throws Error if the response type is unexpected
+ */
+function extractContent(response: AIMessageChunk | string): string {
+  if (typeof response === "string") {
+    return response.trim();
+  } else if (response.content) {
+    if (typeof response.content === "string") {
+      return response.content.trim();
+    } else if (Array.isArray(response.content)) {
+      // Concatenate all 'content' fields from the array
+      const contents = response.content
+        .filter(isMessageContentText) // Only keep text chunks
+        .map(chunk => chunk.text)
+        .join(" ")
+        .trim();
+      return contents;
+    }
+  }
+  throw new Error("Unexpected response structure");
+}
+
+/**
+ * Grades the User's Answer
+ * @param answer - The user's answer to grade.
+ * @returns GradingResponse containing mark and mistakes.
+ */
+export async function gradeAnswer(answer: string): Promise<GradingResponse> {
+  try {
+    // Format the prompt with the user's answer
+    const formattedPrompt = await gradingPrompt.format({ answer });
+
+    // Invoke the LLM with the formatted messages
+    const response = await llmComplex.invoke(formattedPrompt);
+
+    // Extract content using helper function
+    const gradingContent = extractContent(response);
+
+    // Debugging: Log the raw response
+    console.log("Grading content received:", gradingContent);
+
+    // Parse the JSON response
+    const grading: GradingResponse = JSON.parse(gradingContent);
+
+    return grading;
+  } catch (error) {
+    if (isError(error)) {
+      console.error("Error in gradeAnswer:", error.message);
+      throw new Error(`Failed to grade answer: ${error.message}`);
+    } else {
+      console.error("Unknown error in gradeAnswer:", error);
+      throw new Error("Failed to grade answer due to an unknown error.");
+    }
+  }
+}
+
+/**
+ * Generates Feedback Based on Grading
+ * @param grading - The grading response containing mark and mistakes.
+ * @returns A feedback string for the user.
+ */
+export async function generateFeedback(grading: GradingResponse): Promise<string> {
+  try {
+    const { mark, mistakes } = grading;
+
+    // Convert mistakes array to a JSON string for clarity in the prompt
+    const mistakesString = JSON.stringify(mistakes);
+
+    // Format the prompt with grading details
+    const formattedPrompt = await feedbackPrompt.format({ mark, mistakes: mistakesString });
+
+    // Invoke the LLM with the formatted messages
+    const feedbackResponse = await llmSimple.invoke(formattedPrompt);
+
+    // Extract content using helper function
+    const feedbackContent = extractContent(feedbackResponse);
+
+    // Debugging: Log the raw response
+    console.log("Analysis content received:", feedbackContent);
+
+    return feedbackContent;
+  } catch (error) {
+    if (isError(error)) {
+      console.error("Error in generateFeedback:", error.message);
+      throw new Error(`Failed to generate feedback: ${error.message}`);
+    } else {
+      console.error("Unknown error in generateFeedback:", error);
+      throw new Error("Failed to generate feedback due to an unknown error.");
+    }
+  }
+}
+
+/**
+ * Optional: Moderates Feedback Content
+ * @param feedback - The feedback generated for the user.
+ * @returns Boolean indicating if feedback is clean (true) or contains inappropriate content (false).
+ */
+export async function moderateFeedback(feedback: string): Promise<boolean> {
+  try {
+    // Format the prompt with the feedback
+    const formattedPrompt = await guardrailsPrompt.format({ feedback });
+
+    // Invoke the WatsonxAI model with the formatted messages
+    const analysis = await llmGuardrails.invoke(formattedPrompt);
+
+    // Extract content using helper function
+    const analysisContent = extractContent(analysis);
+
+    // Debugging: Log the raw response
+    console.log("Analysis content received:", analysisContent);
+
+    // Determine if content is clean based on analysis
+    return analysisContent.toLowerCase() === "clean";
+  } catch (error) {
+    if (isError(error)) {
+      console.error("Error in moderateFeedback:", error.message);
+      // In case of moderation failure, default to allowing the feedback
+      return true;
+    } else {
+      console.error("Unknown error in moderateFeedback:", error);
+      return true;
+    }
+  }
 }

@@ -1,100 +1,49 @@
 // public/app.js
 document.addEventListener('DOMContentLoaded', () => {
-    const startLessonBtn = document.getElementById('startLesson');
-    const startExerciseBtn = document.getElementById('startExercise');
-    const submitAnswerBtn = document.getElementById('submitAnswer');
-    const restartBtn = document.getElementById('restart');
-  
-    const languageInput = document.getElementById('language');
-    const topicInput = document.getElementById('topic');
-  
-    const lessonSection = document.getElementById('lessonSection');
-    const exerciseSection = document.getElementById('exerciseSection');
-    const feedbackSection = document.getElementById('feedbackSection');
-  
-    const lessonContent = document.getElementById('lessonContent');
-    const exerciseContent = document.getElementById('exerciseContent');
-    const feedbackContent = document.getElementById('feedbackContent');
-    const userAnswer = document.getElementById('userAnswer');
-  
-    startLessonBtn.addEventListener('click', async () => {
-      const language = languageInput.value.trim();
-      const topic = topicInput.value.trim();
-  
-      if (!language || !topic) {
-        alert('Please enter both language and topic.');
-        return;
-      }
-  
-      const response = await fetch('/api/lesson', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ language, topic }),
-      });
-  
-      const data = await response.json();
-  
-      if (response.ok) {
-        lessonContent.textContent = data.lesson;
-        lessonSection.style.display = 'block';
-      } else {
-        alert(data.error || 'Failed to fetch lesson.');
-      }
-    });
-  
-    startExerciseBtn.addEventListener('click', async () => {
-      const language = languageInput.value.trim();
-      const topic = topicInput.value.trim();
-  
-      const response = await fetch('/api/exercise', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ language, topic }),
-      });
-  
-      const data = await response.json();
-  
-      if (response.ok) {
-        exerciseContent.textContent = data.exercise;
-        exerciseSection.style.display = 'block';
-      } else {
-        alert(data.error || 'Failed to fetch exercise.');
-      }
-    });
-  
-    submitAnswerBtn.addEventListener('click', async () => {
-      const language = languageInput.value.trim();
-      const answer = userAnswer.value.trim();
-  
-      if (!answer) {
-        alert('Please enter your answer.');
-        return;
-      }
-  
-      const response = await fetch('/api/feedback', {
+  const languageInput = document.getElementById('language');
+  const answerInput = document.getElementById('answer');
+  const sendBtn = document.getElementById('sendBtn');
+  const responseDiv = document.getElementById('response');
+
+  sendBtn.addEventListener('click', async () => {
+    const language = languageInput.value.trim();
+    const answer = answerInput.value.trim();
+
+    if (!language || !answer) {
+      alert('Please enter both language and your answer.');
+      return;
+    }
+
+    // Clear previous response
+    responseDiv.innerHTML = 'Processing your answer...';
+
+    try {
+      const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ language, answer }),
       });
-  
+
       const data = await response.json();
-  
+
       if (response.ok) {
-        feedbackContent.textContent = data.feedback;
-        feedbackSection.style.display = 'block';
+        responseDiv.innerHTML = `
+          <p><strong>Mark:</strong> ${data.mark}/10</p>
+          <p><strong>Feedback:</strong> ${data.feedback}</p>
+        `;
+      } else if (data.errors) {
+        // Display validation errors
+        const errorMessages = data.errors.map(err => err.msg).join('<br>');
+        responseDiv.innerHTML = `<p style="color: red;"><strong>Error:</strong><br>${errorMessages}</p>`;
+      } else if (data.error) {
+        // Display server-side errors
+        responseDiv.innerHTML = `<p style="color: red;"><strong>Error:</strong> ${data.error}</p>`;
       } else {
-        alert(data.error || 'Failed to fetch feedback.');
+        responseDiv.innerHTML = '<p style="color: red;">An unknown error occurred.</p>';
       }
-    });
-  
-    restartBtn.addEventListener('click', () => {
-      // Reset all sections
-      lessonSection.style.display = 'none';
-      exerciseSection.style.display = 'none';
-      feedbackSection.style.display = 'none';
-      languageInput.value = '';
-      topicInput.value = '';
-      userAnswer.value = '';
-    });
+    } catch (error) {
+      console.error('Error fetching chat response:', error);
+      responseDiv.innerHTML = '<p style="color: red;">An unexpected error occurred.</p>';
+    }
   });
-  
+});
