@@ -1,6 +1,6 @@
 import { ChatOpenAI } from "@langchain/openai";
 import type { AIMessageChunk, MessageContentComplex, MessageContentText } from "@langchain/core/messages";
-// import { WatsonxAI } from "@langchain/community/llms/watsonx_ai";
+import { WatsonxAI } from "@langchain/community/llms/watsonx_ai";
 import { ChatPromptTemplate } from "@langchain/core/prompts"; 
 import dotenv from "dotenv";
 
@@ -29,15 +29,17 @@ const llmGuardrails = new ChatOpenAI({
 });
 
 // Llama model with IBM WatsonX
-// const llmWatsonx = new WatsonxAI({
-//   modelId: "meta-llama/llama-2-70b-chat",
-//   modelParameters: {
-//     max_new_tokens: 100,
-//     min_new_tokens: 0,
-//     stop_sequences: [],
-//     repetition_penalty: 1,
-//   },
-// });
+const llmWatsonx = new WatsonxAI({
+  modelId: "llama-3-1-8b-instruct",
+  ibmCloudApiKey: '< replace with your WatsonX key >',
+  projectId: '< replace with project ID >',
+  modelParameters: {
+    max_new_tokens: 100,
+    min_new_tokens: 0,
+    stop_sequences: [],
+    repetition_penalty: 1,
+  },
+});
 
 
 // Prompt for LLM 1 - Grading
@@ -181,7 +183,7 @@ export async function generateFeedback(grading: GradingResponse): Promise<string
     const formattedPrompt = await feedbackPrompt.format({ mark, mistakes: mistakesString });
 
     // Invoke the LLM with the formatted messages
-    const feedbackResponse = await llmSimple.invoke(formattedPrompt);
+    const feedbackResponse = await llmWatsonx.invoke(formattedPrompt);
 
     const feedbackContent = extractContent(feedbackResponse);
 
