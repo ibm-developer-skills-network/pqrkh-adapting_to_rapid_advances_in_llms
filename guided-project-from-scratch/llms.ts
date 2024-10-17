@@ -31,13 +31,8 @@ const llmGuardrails = new ChatOpenAI({
 // Llama model with IBM WatsonX
 const llmWatsonx = new WatsonxAI({
   modelId: "meta-llama/llama-3-1-8b-instruct",
-<<<<<<< HEAD
-  ibmCloudApiKey: 'u2UDfaHxEp_mQ-w86jc40nPA2Yh4leKYRXTkAyTKRxhB',  
-  projectId: '6391143c-d140-4a59-bdae-cf4ccc2f7cfc', 
-=======
-  ibmCloudApiKey: '< replace with your WatsonX key >',
-  projectId: '< replace with project ID >',
->>>>>>> dc832016c32d1df1b306a0ea87429a62e970b045
+  // ibmCloudApiKey: '< replace with your WatsonX key >',
+  // projectId: '< replace with project ID >',
   modelParameters: {
     max_new_tokens: 100,
     min_new_tokens: 0,
@@ -192,7 +187,7 @@ export async function generateFeedback(language: string, grading: GradingRespons
     console.log("Formatted prompt for generating feedback", formattedPrompt);
 
     // Invoke the LLM with the formatted messages
-    const feedbackResponse = await llmSimple.invoke(formattedPrompt);
+    const feedbackResponse = await llmWatsonx.invoke(formattedPrompt);
 
     const feedbackContent = extractContent(feedbackResponse);
 
