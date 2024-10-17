@@ -7,22 +7,31 @@
 </head>
 <body>
   <div class="container">
-    <h1>Trilingo</h1>
+    <h1>Trilingo</h1> 
 
     <div class="section">
       <label for="language">Language:</label>
-      <input type="text" id="language" placeholder="e.g., Spanish" />
+      <div class="custom-select-wrapper">
+        <select id="language" >
+          <option value="">Select a language</option>
+          <option value="Spanish">Spanish</option>
+          <option value="French">French</option>
+          <option value="German">German</option>
+          <option value="German">Estonian</option>
+          <option value="German">English</option>
+        </select>
+      </div>
     </div>
+    
 
     <div class="section">
-      <label for="answer">Write something in the language:</label>
+      <label for="answer">Write a thoughtful message in the language:</label>
       <textarea id="answer" rows="5" placeholder="Type your answer here..."></textarea>
     </div>
 
     <button id="sendBtn">Send</button>
 
-    <div class="section" id="response">
-    </div>
+    <div class="section" id="response"></div>
   </div>
 
   <script src="app.js"></script>

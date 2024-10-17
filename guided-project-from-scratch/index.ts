@@ -55,16 +55,16 @@ app.post(
 
     try {
       // Step 1: Grade the answer
-      const grading = await gradeAnswer(answer);
+      const grading = await gradeAnswer(language, answer);
       console.log(grading);
 
       // Step 2: Generate feedback based on grading
-      const feedback = await generateFeedback(grading);
+      const feedback = await generateFeedback(language, grading);
 
       console.log(feedback);
 
       // Step 3: Moderate feedback content
-      const isClean = await moderateFeedback(feedback);
+      const isClean = await moderateFeedback(language, feedback);
       if (!isClean) {
         return res
           .status(500)

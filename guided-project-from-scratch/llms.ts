@@ -30,9 +30,9 @@ const llmGuardrails = new ChatOpenAI({
 
 // Llama model with IBM WatsonX
 const llmWatsonx = new WatsonxAI({
-  modelId: "llama-3-1-8b-instruct",
-  ibmCloudApiKey: '< replace with your WatsonX key >',
-  projectId: '< replace with project ID >',
+  modelId: "meta-llama/llama-3-1-8b-instruct",
+  ibmCloudApiKey: 'u2UDfaHxEp_mQ-w86jc40nPA2Yh4leKYRXTkAyTKRxhB',  
+  projectId: '6391143c-d140-4a59-bdae-cf4ccc2f7cfc', 
   modelParameters: {
     max_new_tokens: 100,
     min_new_tokens: 0,
@@ -44,54 +44,54 @@ const llmWatsonx = new WatsonxAI({
 
 // Prompt for LLM 1 - Grading
 const gradingPrompt = ChatPromptTemplate.fromMessages([
-    ["system", "You are an experienced language tutor." ],
-    [
-      "user",`Grade the following answer on a scale of 1 to 10.
-        Provide the grade as an integer under the key "mark" and list the mistakes under the key "mistakes".
+  ["system", "You are an experienced language tutor." ],
+  [
+    "user",`Grade the following answer in {language} on a scale of 1 to 10.
+      Provide the grade as an integer under the key "mark" and list the mistakes under the key "mistakes".
 
-        Answer:
-        "{answer}"
+      Answer:
+      "{answer}"
 
-        Response format (JSON):
-        {{
-          "mark": integer,
-          "mistakes": ["mistake1", "mistake2", ...]
-            }}`,
-    ],
-
+      Response format (JSON):
+      {{
+        "mark": integer,
+        "mistakes": ["mistake1", "mistake2", ...]
+          }}`,
+  ],
 ]);
 
 // Prompt for LLM 2 - Feedback
 const feedbackPrompt = ChatPromptTemplate.fromMessages([
 
-    ["system","You are a friendly language tutor." ],
-    ["user",`
-Based on the following grading, provide constructive feedback to the student.
+  ["system","You are a friendly language tutor." ],
+  ["user",`
+Based on the following grading in {language}, provide constructive feedback to the student in English so they can improve in learning the language. If the mark is 10 then just say the user did a great work. Do not use markdown.
 
 Grading:
 {{
-  "mark": {mark},
-  "mistakes": {mistakes}
-    }}
+"mark": {mark},
+"mistakes": {mistakes}
+  }}
 
 Feedback:
-      `,
-    ],
+    `,
+  ],
 ]);
 
 // Optional Prompt for LLM 3 - Guardrails
 const guardrailsPrompt = ChatPromptTemplate.fromMessages([
-  ["system", "You are a content moderator." ],
-  ["user",`
-Analyze the following feedback for any inappropriate or offensive content. Respond with "Clean" if the content is appropriate or "Flagged" if it contains disallowed content.
+["system", "You are a content moderator." ],
+["user",`
+Analyze the following feedback in {language} for any inappropriate or offensive content. Respond with "Clean" if the content is appropriate or "Flagged" if it contains disallowed content.
 
 Feedback:
 "{feedback}"
 
 Analysis:
-      `,
+    `,
 ],
 ]);
+
 
 /**
  * Type Definitions
@@ -138,13 +138,14 @@ function extractContent(response: AIMessageChunk | string): string {
 
 /**
  * Grades the User's Answer
+ * @param language - The language of the answer.
  * @param answer - The user's answer to grade.
  * @returns GradingResponse containing mark and mistakes.
  */
-export async function gradeAnswer(answer: string): Promise<GradingResponse> {
+export async function gradeAnswer(language: string, answer: string): Promise<GradingResponse> {
   try {
-    // Format the prompt with the user's answer
-    const formattedPrompt = await gradingPrompt.format({ answer });
+    // Format the prompt with the user's answer and selected language
+    const formattedPrompt = await gradingPrompt.format({ language, answer });
 
     // Invoke the LLM with the formatted messages
     const response = await llmComplex.invoke(formattedPrompt);
@@ -169,25 +170,28 @@ export async function gradeAnswer(answer: string): Promise<GradingResponse> {
 
 /**
  * Generates Feedback Based on Grading
+ * @param language - The language for feedback.
  * @param grading - The grading response containing mark and mistakes.
  * @returns A feedback string for the user.
  */
-export async function generateFeedback(grading: GradingResponse): Promise<string> {
+export async function generateFeedback(language: string, grading: GradingResponse): Promise<string> {
   try {
     const { mark, mistakes } = grading;
 
     // Convert mistakes array to a JSON string for clarity in the prompt
     const mistakesString = JSON.stringify(mistakes);
 
-    // Format the prompt with grading details
-    const formattedPrompt = await feedbackPrompt.format({ mark, mistakes: mistakesString });
+    // Format the prompt with grading details and selected language
+    const formattedPrompt = await feedbackPrompt.format({ language, mark, mistakes: mistakesString });
+    
+    console.log("Formatted prompt for generating feedback", formattedPrompt);
 
     // Invoke the LLM with the formatted messages
-    const feedbackResponse = await llmWatsonx.invoke(formattedPrompt);
+    const feedbackResponse = await llmSimple.invoke(formattedPrompt);
 
     const feedbackContent = extractContent(feedbackResponse);
 
-    console.log("Analysis content received:", feedbackContent);
+    console.log("Feedback content received:", feedbackContent);
 
     return feedbackContent;
   } catch (error) {
@@ -203,12 +207,14 @@ export async function generateFeedback(grading: GradingResponse): Promise<string
 
 /**
  * Optional: Moderates Feedback Content
+ * @param language - The language of the feedback.
  * @param feedback - The feedback generated for the user.
  * @returns Boolean indicating if feedback is clean (true) or contains inappropriate content (false).
  */
-export async function moderateFeedback(feedback: string): Promise<boolean> {
+export async function moderateFeedback(language: string, feedback: string): Promise<boolean> {
   try {
-    const formattedPrompt = await guardrailsPrompt.format({ feedback });
+    // Format the prompt with feedback content and selected language
+    const formattedPrompt = await guardrailsPrompt.format({ language, feedback });
 
     const analysis = await llmGuardrails.invoke(formattedPrompt);
 
