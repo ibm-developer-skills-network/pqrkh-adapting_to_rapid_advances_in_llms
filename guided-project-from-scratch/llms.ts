@@ -11,21 +11,21 @@ dotenv.config();
 const llmComplex = new ChatOpenAI({
   apiKey: process.env.OPENAI_API_KEY,
   temperature: 0.7,
-  model: "gpt-4o-mini", 
+  model: "gpt-3.5-turbo", 
 });
 
 // LLM 2 - Simple: Formulates feedback based on grading JSON
 const llmSimple = new ChatOpenAI({
   apiKey: process.env.OPENAI_API_KEY, 
   temperature: 0.5,
-  model: "gpt-4o-mini", 
+  model: "gpt-3.5-turbo", 
 });
 
 // Optional LLM 3 - Guardrails: Content moderation
 const llmGuardrails = new ChatOpenAI({
   apiKey: process.env.OPENAI_API_KEY, 
   temperature: 0.3,
-  model: "gpt-4o-mini", 
+  model: "gpt-3.5-turbo", 
 });
 
 // Llama model with IBM WatsonX

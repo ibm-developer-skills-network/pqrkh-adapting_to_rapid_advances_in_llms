@@ -1,0 +1,466 @@
+prompts:
+  - "## System
+    You are an experienced language tutor.
+    
+    ## User
+    Grade the following answer in {{language}} on a scale of 1 to 10.
+      Provide the grade as an integer under the key 'mark' and list the mistakes in English under the key 'mistakes'.
+
+      Answer:
+      '{{answer}}'
+
+      Response:
+      {
+        \"mark\": integer,
+        \"mistakes\": [\"mistake1\", \"mistake2\", ...]
+      }"
+
+providers:
+  - openai:gpt-4o-mini
+  - openai:gpt-3.5-turbo
+
+tests:
+  # --- Spanish Tests ---
+
+  - description: 'Grade Spanish answer - Correct Answer'
+    vars:
+      language: Spanish
+      answer: "Hola, ¿cómo estás?"
+    assert:
+      - type: is-json
+        value: |
+          {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "required": ["mark", "mistakes"],
+            "properties": {
+              "mark": {
+                "type": "integer",
+                "minimum": 9,
+                "maximum": 10
+              },
+              "mistakes": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                },
+                "minItems": 0,
+                "maxItems": 10
+              }
+            },
+            "additionalProperties": false
+          }
+
+  - description: 'Grade Spanish answer - Missing Closing Question Mark'
+    vars:
+      language: Spanish
+      answer: "¿Cómo te llamas"
+    assert:
+      - type: is-json
+        value: |
+          {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "required": ["mark", "mistakes"],
+            "properties": {
+              "mark": {
+                "type": "integer",
+                "minimum": 5,
+                "maximum": 8
+              },
+              "mistakes": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                },
+                "minItems": 1,
+                "maxItems": 10
+              }
+            },
+            "additionalProperties": false
+          }
+
+  - description: 'Grade Spanish answer - Gendered Noun Mistake'
+    vars:
+      language: Spanish
+      answer: "La gato está en la casa."
+    assert:
+      - type: is-json
+        value: |
+          {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "required": ["mark", "mistakes"],
+            "properties": {
+              "mark": {
+                "type": "integer",
+                "minimum": 2,
+                "maximum": 5
+              },
+              "mistakes": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                },
+                "minItems": 1,
+                "maxItems": 10
+              }
+            },
+            "additionalProperties": false
+          }
+
+  # --- French Tests ---
+
+  - description: 'Grade French answer - Correct Answer'
+    vars:
+      language: French
+      answer: "Bonjour, comment ça va?"
+    assert:
+      - type: is-json
+        value: |
+          {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "required": ["mark", "mistakes"],
+            "properties": {
+              "mark": {
+                "type": "integer",
+                "minimum": 10,
+                "maximum": 10
+              },
+              "mistakes": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                },
+                "minItems": 0,
+                "maxItems": 0
+              }
+            },
+            "additionalProperties": false
+          }
+
+  - description: 'Grade French answer - Missing Accented Character'
+    vars:
+      language: French
+      answer: "Je suis etudiant."
+    assert:
+      - type: is-json
+        value: |
+          {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "required": ["mark", "mistakes"],
+            "properties": {
+              "mark": {
+                "type": "integer",
+                "minimum": 4,
+                "maximum": 6
+              },
+              "mistakes": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                },
+                "minItems": 1,
+                "maxItems": 2
+              }
+            },
+            "additionalProperties": false
+          }
+
+  - description: 'Grade French answer - Gendered Adjective Mistake'
+    vars:
+      language: French
+      answer: "Elle est content."
+    assert:
+      - type: is-json
+        value: |
+          {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "required": ["mark", "mistakes"],
+            "properties": {
+              "mark": {
+                "type": "integer",
+                "minimum": 4,
+                "maximum": 7
+              },
+              "mistakes": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                },
+                "minItems": 1,
+                "maxItems": 10
+              }
+            },
+            "additionalProperties": false
+          }
+
+  # --- German Tests ---
+
+  - description: 'Grade German answer - Correct Answer'
+    vars:
+      language: German
+      answer: "Hallo, wie geht es dir?"
+    assert:
+      - type: is-json
+        value: |
+          {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "required": ["mark", "mistakes"],
+            "properties": {
+              "mark": {
+                "type": "integer",
+                "minimum": 10,
+                "maximum": 10
+              },
+              "mistakes": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                },
+                "minItems": 0,
+                "maxItems": 0
+              }
+            },
+            "additionalProperties": false
+          }
+
+  - description: 'Grade German answer - Missing Umlaut'
+    vars:
+      language: German
+      answer: "Ich habe keine Müsse."
+    assert:
+      - type: is-json
+        value: |
+          {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "required": ["mark", "mistakes"],
+            "properties": {
+              "mark": {
+                "type": "integer",
+                "minimum": 3,
+                "maximum": 6
+              },
+              "mistakes": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                },
+                "minItems": 2,
+                "maxItems": 4
+              }
+            },
+            "additionalProperties": false
+          }
+
+  - description: 'Grade German answer - Gendered Article Mistake'
+    vars:
+      language: German
+      answer: "Der Katze ist süß."
+    assert:
+      - type: is-json
+        value: |
+          {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "required": ["mark", "mistakes"],
+            "properties": {
+              "mark": {
+                "type": "integer",
+                "minimum": 2,
+                "maximum": 5
+              },
+              "mistakes": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                },
+                "minItems": 1,
+                "maxItems": 3
+              }
+            },
+            "additionalProperties": false
+          }
+
+  # --- Estonian Tests ---
+
+  - description: 'Grade Estonian answer - Correct Answer'
+    vars:
+      language: Estonian
+      answer: "Tere, kuidas sul läheb?"
+    assert:
+      - type: is-json
+        value: |
+          {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "required": ["mark", "mistakes"],
+            "properties": {
+              "mark": {
+                "type": "integer",
+                "minimum": 10,
+                "maximum": 10
+              },
+              "mistakes": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                },
+                "minItems": 0,
+                "maxItems": 0
+              }
+            },
+            "additionalProperties": false
+          }
+
+  - description: 'Grade Estonian answer - Verb Conjugation Mistake'
+    vars:
+      language: Estonian
+      answer: "Ta käidab kiiresti."
+    assert:
+      - type: is-json
+        value: |
+          {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "required": ["mark", "mistakes"],
+            "properties": {
+              "mark": {
+                "type": "integer",
+                "minimum": 4,
+                "maximum": 7
+              },
+              "mistakes": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                },
+                "minItems": 1,
+                "maxItems": 2
+              }
+            },
+            "additionalProperties": false
+          }
+
+  - description: 'Grade Estonian answer - Missing Case Ending'
+    vars:
+      language: Estonian
+      answer: "Ma näen koera"
+    assert:
+      - type: is-json
+        value: |
+          {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "required": ["mark", "mistakes"],
+            "properties": {
+              "mark": {
+                "type": "integer",
+                "minimum": 10,
+                "maximum": 10
+              },
+              "mistakes": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                },
+                "minItems": 0,
+                "maxItems": 0
+              }
+            },
+            "additionalProperties": false
+          }
+
+  # --- English Tests ---
+
+  - description: 'Grade English answer - Correct Answer'
+    vars:
+      language: English
+      answer: "Hello, how are you?"
+    assert:
+      - type: is-json
+        value: |
+          {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "required": ["mark", "mistakes"],
+            "properties": {
+              "mark": {
+                "type": "integer",
+                "minimum": 2,
+                "maximum": 5
+              },
+              "mistakes": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                },
+                "minItems": 1,
+                "maxItems": 1
+              }
+            },
+            "additionalProperties": false
+          }
+
+  - description: 'Grade English answer - Subject-Verb Agreement Mistake'
+    vars:
+      language: English
+      answer: "She go to the market."
+    assert:
+      - type: is-json
+        value: |
+          {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "required": ["mark", "mistakes"],
+            "properties": {
+              "mark": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 10
+              },
+              "mistakes": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                },
+                "minItems": 0,
+                "maxItems": 10
+              }
+            },
+            "additionalProperties": false
+          }
+
+  - description: 'Grade English answer - Missing Punctuation'
+    vars:
+      language: English
+      answer: "How are you doing"
+    assert:
+      - type: is-json
+        value: |
+          {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "required": ["mark", "mistakes"],
+            "properties": {
+              "mark": {
+                "type": "integer",
+                "minimum": 6,
+                "maximum": 9
+              },
+              "mistakes": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                },
+                "minItems": 5,
+                "maxItems": 9
+              }
+            },
+            "additionalProperties": false
+          }
