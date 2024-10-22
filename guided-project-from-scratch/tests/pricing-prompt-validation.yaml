@@ -155,7 +155,7 @@ tests:
               "mark": {
                 "type": "integer",
                 "minimum": 4,
-                "maximum": 6
+                "maximum": 7
               },
               "mistakes": {
                 "type": "array",

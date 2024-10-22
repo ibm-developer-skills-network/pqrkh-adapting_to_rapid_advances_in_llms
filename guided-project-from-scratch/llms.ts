@@ -6,6 +6,8 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
+const PROJECT_ID = "skills-network";
+
 
 // LLM 1 - Complex: Grades the answer and returns JSON
 const llmComplex = new ChatOpenAI({
@@ -31,8 +33,9 @@ const llmGuardrails = new ChatOpenAI({
 // Llama model with IBM WatsonX
 const llmWatsonx = new WatsonxAI({
   modelId: "meta-llama/llama-3-1-8b-instruct",
-  // ibmCloudApiKey: '< replace with your WatsonX key >',
-  // projectId: '< replace with project ID >',
+  // No need to set this value at the moment as the key is already exported in this project
+  // ibmCloudApiKey: "set_when_using_your_own_account"  
+  projectId: PROJECT_ID,
   modelParameters: {
     max_new_tokens: 100,
     min_new_tokens: 0,

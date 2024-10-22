@@ -1,0 +1,94 @@
+description: "Test language teacher feedback"
+
+prompts:
+  - "<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+
+    You are a friendly language tutor.
+    <|start_header_id|>user<|end_header_id|>
+
+    Based on the following grading in {{language}}, provide constructive feedback to the student in English
+    so they can improve in learning the language. If the mark is 10 then just say the user did a great work. Do not use markdown.
+
+    Grading:
+    {
+    'mark': {{mark}},
+    'mistakes': {{mistakes}}
+      }
+
+    Feedback:<|eot_id|>
+    <|start_header_id|>assistant<|end_header_id|>"
+
+providers:
+  - "watsonx:meta-llama/llama-3-2-3b-instruct"
+  - "watsonx:meta-llama/llama-3-1-8b-instruct"
+
+tests:
+  - description: 'Feedback for French, mark 8, a few mistakes'
+    vars:
+      language: French
+      mark: 8
+      mistakes: "[agreement, gender]"
+    assert:
+      - type: contains
+        value: "improve"
+      - type: contains
+        value: "agreement"
+      - type: contains
+        value: "gender"
+      - type: not-contains
+        value: "feedback for the student"
+      - type: cost
+        threshold: 00.0001
+      - type: latency
+        threshold: 35
+
+  - description: 'Feedback for Spanish, perfect Spanish'
+    vars:
+      language: Spanish
+      mark: 10
+      mistakes: "[]"
+    assert:
+    - type: contains
+      value: "You did a great work"
+    - type: not-contains
+      value: "Please provide" 
+    - type: cost
+      threshold: 0.0001
+    - type: latency
+      threshold: 35
+
+  - description: 'Feedback for Spanish, mark 5, with multiple mistakes'
+    vars:
+      language: Spanish
+      mark: 5
+      mistakes: "[verb conjugation, sentence structure, vocabulary]"
+    assert:
+      - type: llm-rubric
+        value: gives output like a language tutor with feedback how to improve
+      - type: javascript
+        value: output.length < 2000
+      - type: not-contains
+        value: "Please provide"
+      - type: cost
+        threshold: 0.0001
+      - type: latency
+        threshold: 35
+
+  - description: 'Low score for Spanish, mark 3, with several issues'
+    vars:
+      language: Spanish
+      mark: 3
+      mistakes: "[sentence structure, vocabulary, spelling]"
+    assert:
+      - type: contains
+        value: "sentence structure"
+      - type: contains
+        value: "vocabulary"
+      - type: contains
+        value: "spelling"
+      - type: llm-rubric
+        value: encourages the learner to improve with constructive feedback
+      - type: cost
+        threshold: 0.0001
+      - type: latency
+        threshold: 35
